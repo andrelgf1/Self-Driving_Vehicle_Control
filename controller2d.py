@@ -114,6 +114,10 @@ class Controller2D(object):
             throttle_output = 0.5 * self.vars.v_previous
         """
         self.vars.create_var('v_previous', 0.0)
+        self.vars.create_var('t_previous', 0.0)
+        self.vars.create_var('integral_previous', 0.0)
+        self.vars.create_var('previous_error', 0.0)
+
 
         # Skip the first frame to store previous values properly
         if self._start_control_loop:
@@ -158,12 +162,44 @@ class Controller2D(object):
                 Implement a longitudinal controller here. Remember that you can
                 access the persistent variables declared above here. For
                 example, can treat self.vars.v_previous like a "global variable".
-            """
+          """
+        # PID controller for longitudinal contol
+        #--------------------------------------------------------------------------
+            kp = 1.0# working First Version
+            ki = 0.1 # working First Version
+            kd = 0.05 # working First Version
+
+            error = v_desired - v
+            delta_time = t - self.vars.t_previous
+
+            #Proportional Term
+            proportional_term = kp * error
+
+            #Integral Term
+            integral = self.vars.integral_previous + error * delta_time 
+            integral_term = ki * integral
+
+            #Derivative Term
+            derivative = (error - self.vars.previous_error) / delta_time
+            derivative_term = kd * derivative
+
+            # acceleration (PID output)
+            acc = proportional_term + integral_term + derivative_term 
+
+            # Convert accelartion to throttle
+            max_acc = 4.5
+            throttle_output = max(0,min(max_acc , acc)) / max_acc
+            # print(" Desired v =",v_desired, " error " , error, " throttle = ", throttle_output)
+            print()
+            print(" velocity ",v ," Desired v ",v_desired, " error " , error, " throttle = ", throttle_output)
+
+        # -------------------------------------------------------------------------
+            
             
             # Change these outputs with the longitudinal controller. Note that
             # brake_output is optional and is not required to pass the
             # assignment, as the car will naturally slow down over time.
-            throttle_output = 0
+            # throttle_output = 0
             brake_output    = 0
 
             ######################################################
@@ -176,9 +212,49 @@ class Controller2D(object):
                 access the persistent variables declared above here. For
                 example, can treat self.vars.v_previous like a "global variable".
             """
+            # Stanley controlller for steering angle
+            #---------------------------------------------------------------------
+
+            #Calclate distance from car to each waypint
+            # distances = np.linalg.norm( waypoints - np.array([x,y]), axis=1 )
+            waypoints = np.asarray(waypoints)
+            dx = waypoints[:, 0] - x
+            dy = waypoints[:, 1] - y
+            distances = np.sqrt(dx**2 + dy**2)
+
+            #Find shortest one 
+            nearest_index = np.argmin(distances)
+            # cross-track error
+            cte = distances[nearest_index]
+
+
+            # I will use two poins to find path heading, the shortes point and another one ( the previous or the next one )
+
+            previous_waypoint = waypoints[nearest_index]
+
+            if nearest_index < len(waypoints) -1 :
+                next_waypoint = waypoints[nearest_index+1]
+            else:
+                next_waypoint = previous_waypoint
+                previous_waypoint = waypoints[nearest_index-1]
+
+            path_heading = np.arctan2( next_waypoint[1]-previous_waypoint[1] , next_waypoint[0]-previous_waypoint[0] )
+
+            heading_error = path_heading - yaw
+            # Normalize the heading error to make i between pi and - pi
+            heading_error = np.arctan2(np.sin(heading_error), np.cos(heading_error))
+
+            k = 0.03 # working First Version
+
+            stering_angle = heading_error + np.arctan(k * cte / v)
+            stering_angle = max ( -1.22 , min(1.22 , stering_angle) )
+
+            print(" Yaw ",yaw ," path_heading ",path_heading, " stering_angle " , stering_angle)
+
+            #---------------------------------------------------------------------
             
             # Change the steer output with the lateral controller. 
-            steer_output    = 0
+            steer_output    = stering_angle
 
             ######################################################
             # SET CONTROLS OUTPUT
@@ -198,3 +274,9 @@ class Controller2D(object):
             in the next iteration)
         """
         self.vars.v_previous = v  # Store forward speed to be used in next step
+
+        # ------------------------------------------------------------------
+        self.vars.previous_error = error
+        self.vars.integral_previous = integral
+        self.vars.t_previous = t
+        # ------------------------------------------------------------------
