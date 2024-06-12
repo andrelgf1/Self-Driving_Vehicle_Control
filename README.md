@@ -3,6 +3,10 @@
 
 This repository contains the final project for the "Introduction to Self-Driving Cars" course, part of the Self-Driving Cars Specialization. The project involves implementing a controller in the CARLA simulator to navigate a vehicle through preset waypoints on a race track, using both longitudinal and lateral control.
 
+<div align="center">
+  <img src="controller_output/video_output_gif.gif" alt="Carla Simulation output GIF">
+</div>
+
 ## Project Overview
 
 In this project, I had to implement a controller for the CARLA simulator. The goal is to control the vehicle to follow a race track by navigating through preset waypoints, reaching these waypoints at certain desired speeds.
@@ -67,6 +71,23 @@ python grade_c1m7.py racetrack_waypoints.txt /controller_output/trajectory.txt
 ```
 
 The grading script will plot your trajectory along with the velocity at each waypoint. In this implementation, the controller was able to achieve 100% of the waypoints with the desired velocity.
+
+## Results
+The video for the final result is also available in the `controller_output` folder.
+The following images show the results of the vehicle's trajectory, forward speed, steering output, and throttle output:
+
+### Trajectory
+<div align="center">
+  <img src="controller_output/trajectory.png" alt="Trajectory">
+</div>
+
+### Forward Speed, Steering Output, and Throttle Output
+
+<div align="center">
+  <img src="controller_output/forward_speed.png" alt="Forward Speed" width="30%">
+  <img src="controller_output/steer_output.png" alt="Steering Output" width="30%">
+  <img src="controller_output/throttle_output.png" alt="Throttle Output" width="30%">
+</div>
 
 ## Conclusion
 
