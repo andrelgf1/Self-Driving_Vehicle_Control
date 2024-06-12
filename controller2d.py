@@ -165,9 +165,9 @@ class Controller2D(object):
           """
         # PID controller for longitudinal contol
         #--------------------------------------------------------------------------
-            kp = 1.0# working First Version
-            ki = 0.1 # working First Version
-            kd = 0.05 # working First Version
+            kp = 1.0
+            ki = 0.1 
+            kd = 0.05 
 
             error = v_desired - v
             delta_time = t - self.vars.t_previous
@@ -216,7 +216,6 @@ class Controller2D(object):
             #---------------------------------------------------------------------
 
             #Calclate distance from car to each waypint
-            # distances = np.linalg.norm( waypoints - np.array([x,y]), axis=1 )
             waypoints = np.asarray(waypoints)
             dx = waypoints[:, 0] - x
             dy = waypoints[:, 1] - y
@@ -224,12 +223,8 @@ class Controller2D(object):
 
             #Find shortest one 
             nearest_index = np.argmin(distances)
-            # cross-track error
-            cte = distances[nearest_index]
 
-
-            # I will use two poins to find path heading, the shortes point and another one ( the previous or the next one )
-
+            # I will use two poins to find path heading, the closest path point to my car and another one ( the previous or the next one )
             previous_waypoint = waypoints[nearest_index]
 
             if nearest_index < len(waypoints) -1 :
@@ -238,15 +233,31 @@ class Controller2D(object):
                 next_waypoint = previous_waypoint
                 previous_waypoint = waypoints[nearest_index-1]
 
+            
+            # Heading Error Calcualtion
             path_heading = np.arctan2( next_waypoint[1]-previous_waypoint[1] , next_waypoint[0]-previous_waypoint[0] )
-
             heading_error = path_heading - yaw
             # Normalize the heading error to make i between pi and - pi
             heading_error = np.arctan2(np.sin(heading_error), np.cos(heading_error))
 
-            k = 0.03 # working First Version
+            # Cross Track Error
+            x1, y1, _ = previous_waypoint
+            x2, y2, _ = next_waypoint
+            xc, yc = np.array([x,y])
+            
+            # Calculate the coefficients of the line ax + by + c = 0
+            a = y2 - y1
+            b = x1 - x2
+            c = x2 * y1 - x1 * y2
+            
+            # Calculate the cross-track error
+            cte = (a * xc + b * yc + c) / np.sqrt(a**2 + b**2)
 
+            k = 0.5 
+
+            # Stanley lateral control
             stering_angle = heading_error + np.arctan(k * cte / v)
+            #limited steering to +-1.22
             stering_angle = max ( -1.22 , min(1.22 , stering_angle) )
 
             print(" Yaw ",yaw ," path_heading ",path_heading, " stering_angle " , stering_angle)
